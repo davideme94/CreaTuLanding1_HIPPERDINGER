@@ -10,6 +10,8 @@ from urllib.request import Request, urlopen
 import json, math, os, re, threading, time
 from xml.etree import ElementTree as ET
 
+from miclima_backend import alerts_for as sourced_alerts_for
+
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / 'public'
 FEED = 'https://ssl.smn.gob.ar/feeds/CAP/rss_alertaCAP_nuevo.xml'
@@ -256,7 +258,7 @@ class Handler(SimpleHTTPRequestHandler):
                     lat=float(q.get('lat',[''])[0]);lon=float(q.get('lon',[''])[0])
                     if not(-56<=lat<=-21 and -75<=lon<=-52):
                         return self.send_json({'error':'Seleccioná un punto de Argentina.'},400)
-                    if path=='/api/alerts':return self.send_json(alerts_for(lat,lon))
+                    if path=='/api/alerts':return self.send_json(sourced_alerts_for(lat,lon))
                     url=GEOREF+'/ubicacion?'+urlencode({'lat':round(lat,6),'lon':round(lon,6)})
                     d=get_place(('reverse',round(lat,3),round(lon,3)),url)
                     x=d.get('ubicacion') or {}
@@ -290,22 +292,18 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Cache-Control','no-cache')
         return super().end_headers()
 
-def diagnose_public_api():
-    places=[('Santa Rosa La Pampa',-36.62,-64.29),('Córdoba',-31.42,-64.19),('Bahía Blanca',-38.72,-62.27),('Formosa',-26.18,-58.18)]
-    for name,lat,lon in places:
+def startup_source_check():
+    # Verificación de la conexión real durante el arranque.
+    for locality,lat,lon in [('Jose C Paz',-34.515,-58.76),('Cordoba',-31.42,-64.19)]:
         try:
-            url='https://miclima.com.ar/api/riesgo?'+urlencode({'lat':lat,'lon':lon})
-            d=json.loads(fetch(url))
-            print('PRUEBA MI CLIMA',name, 'hay_alertas',d.get('hay_alertas'),'alertas',repr(d.get('alertas'))[:3900],flush=True)
-        except Exception as e:
-            print('PRUEBA MI CLIMA ERROR',name,type(e).__name__,str(e)[:250],flush=True)
-    try:
-        d=json.loads(fetch('https://miclima.com.ar/api/estado'))
-        print('PRUEBA MI CLIMA ESTADO',repr(d)[:5000],flush=True)
-    except Exception as e:
-        print('PRUEBA MI CLIMA ESTADO ERROR',type(e).__name__,str(e)[:250],flush=True)
+            result=sourced_alerts_for(lat,lon)
+            print('PRUEBA FUENTE ACTIVA:', locality,
+                  'ok:',result['ok'],'status:',result['status'],
+                  'avisos:',len(result['alerts']),flush=True)
+        except Exception as exc:
+            print('PRUEBA FUENTE ERROR:',locality,type(exc).__name__,flush=True)
 
 if __name__=='__main__':
     print('Alerta en tu zona escuchando en puerto',PORT,flush=True)
-    threading.Thread(target=diagnose_public_api,daemon=True).start()
+    threading.Thread(target=startup_source_check,daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0',PORT),Handler).serve_forever()

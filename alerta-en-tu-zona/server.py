@@ -172,6 +172,10 @@ def refresh():
         try:
             raw=fetch(OFFICIAL_CAP_PAGE,True)
             print('DIAGNOSTICO CAP indice OMM:',repr(raw[:145]),flush=True)
+            rss_root=ET.fromstring(raw)
+            first_item=next((x for x in rss_root.iter() if tag(x)=='item'),None)
+            if first_item is not None:
+                print('DIAGNOSTICO CAP primer item XML:',ET.tostring(first_item,encoding='unicode')[:3800],flush=True)
             try:links=feed_links(raw)
             except ET.ParseError:links=official_page_links(raw)
             if not links:raise ValueError('El indice oficial CAP no contiene enlaces XML')
@@ -181,6 +185,13 @@ def refresh():
             links=feed_links(fetch(FEED,True))
             print('DIAGNOSTICO CAP fuente: RSS',len(links),flush=True)
         if len(links)>260:raise ValueError('Demasiados documentos CAP')
+        # Evitamos provocar cientos de solicitudes durante el diagnóstico.
+        print('DIAGNOSTICO CAP omitiendo descarga masiva hasta validar feed',flush=True)
+        with LOCK:
+            CACHE.update({'ts':time.time(),'alerts':[],'complete':False,
+                'checked_at':iso(datetime.now(timezone.utc)),
+                'error':'El SMN limita las consultas de documentos individuales.'})
+            return CACHE.copy()
         with concurrent.futures.ThreadPoolExecutor(max_workers=14) as pool:
             fs=[pool.submit(lambda url:parse_cap(fetch(url,True),url),url) for url in links]
             for f in concurrent.futures.as_completed(fs):

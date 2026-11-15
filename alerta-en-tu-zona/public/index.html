@@ -66,7 +66,7 @@
       <div class="card-bottom" id="status-bottom"><span id="freshness">Datos aún no consultados</span><button class="text-action" id="refresh-button" type="button" disabled><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2 6"/><path d="M20 4v7h-7"/></svg> Actualizar</button></div>
     </section>
 
-    <div id="partial-warning" class="warning-box" hidden role="status"><svg viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 4h.01"/></svg><span>La consulta fue parcial. Verificá también el sitio oficial del SMN.</span></div>
+    <div id="partial-warning" class="warning-box" hidden role="status"><svg viewBox="0 0 24 24"><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5m0 4h.01"/></svg><span>No se pudo consultar el nivel de alerta de forma confiable. <a href="https://www.smn.gob.ar/alertas" target="_blank" rel="noopener noreferrer">Ver las alertas oficiales del SMN</a>.</span></div>
     <div id="demo-banner" class="demo-banner" hidden><strong>VISTA DEMOSTRATIVA</strong><span>Los colores y las alertas de esta vista no son reales.</span></div>
 
     <section class="recommendations" id="recommendations" aria-labelledby="tips-heading">
@@ -95,7 +95,7 @@ const DEMO=(new URLSearchParams(location.search)).get('demo');
 const DEMO_ALLOWED=['green','yellow','orange','red'];
 const LABELS={green:'SIN ALERTA',yellow:'ALERTA AMARILLA',orange:'ALERTA NARANJA',red:'ALERTA ROJA',unknown:'SIN DATOS VERIFICADOS',idle:'SIN CONSULTAR'};
 const KICKERS={green:'NIVEL VERDE · TRANQUILIDAD',yellow:'NIVEL AMARILLO · INFORMATE',orange:'NIVEL NARANJA · PREPARATE',red:'NIVEL ROJO · SEGUÍ INDICACIONES OFICIALES',unknown:'NO SE PUDO COMPROBAR',idle:'LISTO PARA CONSULTAR'};
-const descriptions={green:'No se identificaron alertas meteorológicas CAP para esta zona en la última consulta.',unknown:'La fuente oficial no pudo verificarse por completo. No es seguro asumir que no hay alertas.'};
+const descriptions={green:'No se identificaron alertas meteorológicas CAP para esta zona en la última consulta.',unknown:'El SMN no permitió comprobar todos los datos de esta zona. No es seguro asumir que no hay alertas; verificá el estado oficial.'};
 const tips={
   storm:[
     ['Asegurá los objetos sueltos','Revisá macetas, toldos, muebles de exterior y chapas antes de que aumente el viento.'],

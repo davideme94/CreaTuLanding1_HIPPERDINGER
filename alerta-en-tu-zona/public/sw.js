@@ -1,5 +1,5 @@
-const VERSION='alerta-zona-shell-v1';
-const SHELL=['/','/index.html','/manifest.webmanifest','/assets/icon-192.png','/assets/icon-512.png','/assets/maskable-512.png','/assets/apple-touch-icon.png'];
+const VERSION='alerta-zona-shell-v2';
+const SHELL=['/','/index.html','/manifest.webmanifest','/assets/favicon-v2.png','/assets/icon-192-v2.png','/assets/icon-512-v2.png','/assets/maskable-512-v2.png','/assets/apple-touch-icon-v2.png'];
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(SHELL)));
   self.skipWaiting();

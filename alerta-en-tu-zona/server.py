@@ -248,4 +248,5 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__=='__main__':
     print('Alerta en tu zona escuchando en puerto',PORT,flush=True)
+    threading.Thread(target=refresh,daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0',PORT),Handler).serve_forever()

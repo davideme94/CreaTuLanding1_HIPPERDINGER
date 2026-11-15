@@ -152,11 +152,15 @@ def refresh():
             fs=[pool.submit(lambda url:parse_cap(fetch(url,True),url),url) for url in links]
             for f in concurrent.futures.as_completed(fs):
                 try:alerts.extend(f.result())
-                except Exception:fail+=1
+                except Exception as exc:
+                    fail+=1
+                    if fail<=4: print('DIAGNOSTICO CAP documento no disponible:',type(exc).__name__,str(exc)[:220],flush=True)
+        print('DIAGNOSTICO CAP feed documentos:',len(links),'alertas leidas:',len(alerts),'fallas:',fail,flush=True)
         result={'ts':time.time(),'alerts':alerts,'complete':fail==0,
                 'checked_at':iso(datetime.now(timezone.utc)),
                 'error':None if fail==0 else 'No pudieron verificarse todas las alertas CAP.'}
-    except Exception:
+    except Exception as exc:
+        print('DIAGNOSTICO CAP feed error:',type(exc).__name__,str(exc)[:260],flush=True)
         result={'ts':time.time(),'alerts':[],'complete':False,
                 'checked_at':iso(datetime.now(timezone.utc)),
                 'error':'La fuente oficial no se encuentra disponible desde este servidor.'}

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0c4174">
-  <meta name="description" content="Conocé las alertas meteorológicas del Servicio Meteorológico Nacional según tu ubicación y recibí recomendaciones prácticas.">
+  <meta name="description" content="Consultá alertas meteorológicas del SMN por ubicación, con datos procesados por Mi Clima y recomendaciones específicas.">
   <meta name="color-scheme" content="light">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -53,7 +53,7 @@
     </section>
 
     <section id="status-card" class="status-card state-idle" aria-label="Estado de alertas" aria-live="polite">
-      <div class="card-top"><span class="pill"><span class="pill-dot"></span><span id="status-top">ESTADO DE LA ZONA</span></span><span id="source-badge" class="source-badge">SMN · FUENTE OFICIAL</span></div>
+      <div class="card-top"><span class="pill"><span class="pill-dot"></span><span id="status-top">ESTADO DE LA ZONA</span></span><span id="source-badge" class="source-badge">SMN · VÍA MI CLIMA</span></div>
       <div class="signal-area">
         <div id="signal" class="signal signal-idle"><span class="signal-gloss"></span><span class="signal-center" id="signal-mark">—</span></div>
       </div>
@@ -86,7 +86,7 @@
     <section class="info-bar"><div class="info-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/></svg></div><div><strong>Una información importante</strong><p>Esta herramienta consulta alertas meteorológicas CAP. Los avisos a muy corto plazo y las alertas por temperaturas extremas deben verificarse también en el sitio del SMN. No reemplaza los canales oficiales de emergencia.</p></div></section>
 
     <div class="external-actions"><a class="smn-link" href="https://www.smn.gob.ar/alertas" target="_blank" rel="noopener noreferrer">Ver todas las alertas oficiales del SMN <svg viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-9 9"/><path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h6"/></svg></a></div>
-    <footer class="footer"><span>Información meteorológica basada en datos públicos del SMN.</span><span>La ubicación se usa solo para la consulta y se guarda en este dispositivo si la seleccionás.</span><span class="footer-lower">Alerta en tu zona · Argentina</span></footer>
+    <footer class="footer"><span>Alertas del SMN, consultadas a través de <a href="https://miclima.com.ar/api" target="_blank" rel="noopener noreferrer">Mi Clima</a> (API de uso libre con atribución).</span><span>La ubicación se usa solo para la consulta y se guarda en este dispositivo si la seleccionás.</span><span class="footer-lower">Alerta en tu zona · Argentina</span></footer>
   </main>
   <div id="toast" class="toast" role="alert" hidden></div>
   <script>'use strict';
@@ -178,6 +178,8 @@ function renderAlerts(data){
     const title=LABELS[level]||'ALERTA METEOROLÓGICA';
     const description=first.description||first.headline||'El SMN informa un fenómeno meteorológico para esta zona.';
     let meta=[first.event];
+    if(first.color_verified===false)meta.push('Color orientativo según severidad CAP');
+    if(first.horario_dudoso)meta.push('Horario SMN posiblemente desfasado');
     if(first.starts)meta.push((future?'Desde ':'Inicio ')+formatDate(first.starts));
     if(first.ends)meta.push('Hasta '+formatDate(first.ends));
     state(level,title,description,'',meta,data.checked_at);

@@ -170,9 +170,12 @@ def refresh():
         # Priorizamos el índice web oficial registrado en la OMM, con enlaces
         # actualizados a los XML CAP, y usamos el RSS solo como respaldo.
         try:
-            links=official_page_links(fetch(OFFICIAL_CAP_PAGE,True))
-            if not links:raise ValueError('La página CAP no contiene XML')
-            print('DIAGNOSTICO CAP fuente: pagina oficial',len(links),flush=True)
+            raw=fetch(OFFICIAL_CAP_PAGE,True)
+            print('DIAGNOSTICO CAP indice OMM:',repr(raw[:145]),flush=True)
+            try:links=feed_links(raw)
+            except ET.ParseError:links=official_page_links(raw)
+            if not links:raise ValueError('El indice oficial CAP no contiene enlaces XML')
+            print('DIAGNOSTICO CAP fuente: indice OMM',len(links),flush=True)
         except Exception as exc:
             print('DIAGNOSTICO CAP pagina oficial error:',type(exc).__name__,str(exc)[:200],flush=True)
             links=feed_links(fetch(FEED,True))

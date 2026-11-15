@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
-from urllib.parse import urlsplit, parse_qs, urlencode
+from urllib.parse import urlsplit, parse_qs, urlencode, urljoin
+from html.parser import HTMLParser
 from urllib.request import Request, urlopen
 import json, math, os, re, threading, time
 from xml.etree import ElementTree as ET
@@ -12,6 +13,7 @@ from xml.etree import ElementTree as ET
 ROOT = Path(__file__).resolve().parent
 PUBLIC = ROOT / 'public'
 FEED = 'https://ssl.smn.gob.ar/feeds/CAP/rss_alertaCAP_nuevo.xml'
+OFFICIAL_CAP_PAGE = 'https://ssl.smn.gob.ar/CAP/AR.php'
 GEOREF = 'https://apis.datos.gob.ar/georef/api/v2.0'
 PORT = int(os.environ.get('PORT', '8080'))
 CACHE_TTL = 300
@@ -69,6 +71,24 @@ def feed_links(raw):
             raise ValueError('Referencia CAP inválida')
         links.append(url)
     return list(dict.fromkeys(links))
+
+class _CapLinkParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.links=[]
+    def handle_starttag(self,tag_name,attrs):
+        if tag_name.lower()!='a':return
+        attrs=dict(attrs)
+        href=attrs.get('href','')
+        link=urljoin(OFFICIAL_CAP_PAGE,href)
+        p=urlsplit(link)
+        if p.scheme=='https' and p.hostname=='ssl.smn.gob.ar' and p.path.startswith('/feeds/CAP/') and p.path.endswith('.xml'):
+            self.links.append(link)
+
+def official_page_links(raw):
+    parser=_CapLinkParser()
+    parser.feed(raw.decode('utf-8','replace'))
+    return list(dict.fromkeys(parser.links))
 
 def polygon(raw):
     result=[]
@@ -146,7 +166,17 @@ def refresh():
         CACHE['ts']=now
     alerts=[];fail=0
     try:
-        links=feed_links(fetch(FEED,True))
+        # El índice RSS puede contener URLs antiguas que el SMN ya no conserva.
+        # Priorizamos el índice web oficial registrado en la OMM, con enlaces
+        # actualizados a los XML CAP, y usamos el RSS solo como respaldo.
+        try:
+            links=official_page_links(fetch(OFFICIAL_CAP_PAGE,True))
+            if not links:raise ValueError('La página CAP no contiene XML')
+            print('DIAGNOSTICO CAP fuente: pagina oficial',len(links),flush=True)
+        except Exception as exc:
+            print('DIAGNOSTICO CAP pagina oficial error:',type(exc).__name__,str(exc)[:200],flush=True)
+            links=feed_links(fetch(FEED,True))
+            print('DIAGNOSTICO CAP fuente: RSS',len(links),flush=True)
         if len(links)>260:raise ValueError('Demasiados documentos CAP')
         with concurrent.futures.ThreadPoolExecutor(max_workers=14) as pool:
             fs=[pool.submit(lambda url:parse_cap(fetch(url,True),url),url) for url in links]

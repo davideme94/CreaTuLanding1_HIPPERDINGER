@@ -291,18 +291,19 @@ class Handler(SimpleHTTPRequestHandler):
         return super().end_headers()
 
 def diagnose_public_api():
-    from urllib.parse import urlencode
-    base='https://miclima.com.ar/api/riesgo?'+urlencode({'lat':-34.515,'lon':-58.76})
-    for u in [base,'https://miclima.com.ar/openapi.json']:
+    places=[('Santa Rosa La Pampa',-36.62,-64.29),('Córdoba',-31.42,-64.19),('Bahía Blanca',-38.72,-62.27),('Formosa',-26.18,-58.18)]
+    for name,lat,lon in places:
         try:
-            raw=fetch(u)
-            data=json.loads(raw)
-            if '/riesgo?' in u:
-                print('FUENTE ABIERTA RIESGO:',repr(data)[:5000],flush=True)
-            else:
-                print('FUENTE ABIERTA OPENAPI:',repr(data.get('paths',{}).get('/api/riesgo',{}))[:3300],flush=True)
+            url='https://miclima.com.ar/api/riesgo?'+urlencode({'lat':lat,'lon':lon})
+            d=json.loads(fetch(url))
+            print('PRUEBA MI CLIMA',name, 'hay_alertas',d.get('hay_alertas'),'alertas',repr(d.get('alertas'))[:3900],flush=True)
         except Exception as e:
-            print('FUENTE ABIERTA ERROR:',type(e).__name__,str(e)[:260],flush=True)
+            print('PRUEBA MI CLIMA ERROR',name,type(e).__name__,str(e)[:250],flush=True)
+    try:
+        d=json.loads(fetch('https://miclima.com.ar/api/estado'))
+        print('PRUEBA MI CLIMA ESTADO',repr(d)[:5000],flush=True)
+    except Exception as e:
+        print('PRUEBA MI CLIMA ESTADO ERROR',type(e).__name__,str(e)[:250],flush=True)
 
 if __name__=='__main__':
     print('Alerta en tu zona escuchando en puerto',PORT,flush=True)

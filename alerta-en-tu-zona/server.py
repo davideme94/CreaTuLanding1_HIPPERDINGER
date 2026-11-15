@@ -290,7 +290,21 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Cache-Control','no-cache')
         return super().end_headers()
 
+def diagnose_public_api():
+    from urllib.parse import urlencode
+    base='https://miclima.com.ar/api/riesgo?'+urlencode({'lat':-34.515,'lon':-58.76})
+    for u in [base,'https://miclima.com.ar/openapi.json']:
+        try:
+            raw=fetch(u)
+            data=json.loads(raw)
+            if '/riesgo?' in u:
+                print('FUENTE ABIERTA RIESGO:',repr(data)[:5000],flush=True)
+            else:
+                print('FUENTE ABIERTA OPENAPI:',repr(data.get('paths',{}).get('/api/riesgo',{}))[:3300],flush=True)
+        except Exception as e:
+            print('FUENTE ABIERTA ERROR:',type(e).__name__,str(e)[:260],flush=True)
+
 if __name__=='__main__':
     print('Alerta en tu zona escuchando en puerto',PORT,flush=True)
-    threading.Thread(target=refresh,daemon=True).start()
+    threading.Thread(target=diagnose_public_api,daemon=True).start()
     ThreadingHTTPServer(('0.0.0.0',PORT),Handler).serve_forever()
